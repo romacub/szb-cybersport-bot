@@ -1,8 +1,14 @@
 import logging
 import os
-from typing import Final
+from dataclasses import dataclass
+from functools import lru_cache
 
 from dotenv import load_dotenv
+
+
+@dataclass
+class Settings:
+    bot_token: str
 
 
 def setup_logging() -> None:
@@ -12,8 +18,22 @@ def setup_logging() -> None:
     )
 
 
-load_dotenv()
+def load_environment() -> None:
+    load_dotenv()
 
-BOT_TOKEN: Final[str | None] = os.getenv("BOT_TOKEN")
-if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN is not set in .env")
+
+def _build_settings() -> Settings:
+    load_environment()
+    bot_token = os.getenv("BOT_TOKEN")
+    if not bot_token:
+        raise RuntimeError("BOT_TOKEN is not set in .env")
+    return Settings(bot_token=bot_token)
+
+
+def get_settings() -> Settings:
+    return _cached_settings()
+
+
+@lru_cache(maxsize=1)
+def _cached_settings() -> Settings:
+    return _build_settings()
